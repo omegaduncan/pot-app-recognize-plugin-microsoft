@@ -6,7 +6,7 @@ use std::error::Error;
 pub fn recognize(
     base64: &str, // 图像Base64
     lang: &str,   // 识别语言
-    // (pot会根据info.json 中的 language 字段传入插件需要的语言代码，无需再次转换)
+    // (pot会根据info.json 中的 language 字段传入插件需要的语言代码,无需再次转换)
     needs: HashMap<String, String>, // 插件需要的其他参数,由info.json定义
 ) -> Result<Value, Box<dyn Error>> {
     let client = reqwest::blocking::ClientBuilder::new().build()?;
@@ -29,28 +29,37 @@ pub fn recognize(
         .send()?
         .json()?;
 
-fn parse_result(res: Value, client: &reqwest::blocking::Client) -> Option<Result<Value, Box<dyn Error>>> {
-    println!("{res:?}");
-    if let Some(error) = res.as_object()?.get("error") {
-        return Some(Err(error.to_string().into()));
-    }
-    let result_url = res.as_object()?.get("analyzeResult")?.as_object()?.get("readResults")?.as_str()?;
-    
-    let mut result = String::new();
-    let res: Value = client.get(result_url).send()?.json()?;
-    let lines = res.as_array()?;
-    for line in lines {
-        let text = line.as_object()?.get("text")?.as_str()?;
-        result.push_str(text);
-        result.push('\n');
-    }
-    Some(Ok(Value::String(result)))
-}
+    fn parse_result(res: Value, client: &reqwest::blocking::Client) -> Result<Value, Box<dyn Error>> {
+        println!("{res:?}");
+        if let Some(error) = res.as_object().and_then(|obj| obj.get("error")) {
+            return Err(error.to_string().into());
+        }
+        let result_url = res
+            .as_object()
+            .and_then(|obj| obj.get("analyzeResult"))
+            .and_then(|obj| obj.as_object())
+            .and_then(|obj| obj.get("readResults"))
+            .and_then(|url| url.as_str())
+            .ok_or("Failed to extract result URL")?;
 
-    if let Some(result) = parse_result(res) {
-        return result;
-    } else {
-        return Err("Response Parse Error".into());
+        let res: Value = client.get(result_url).send()?.json()?;
+        let lines = res.as_array().ok_or("Failed to parse lines")?;
+        let mut result = String::new();
+        for line in lines {
+            let text = line
+                .as_object()
+                .and_then(|obj| obj.get("text"))
+                .and_then(|text| text.as_str())
+                .ok_or("Failed to extract line text")?;
+            result.push_str(text);
+            result.push('\n');
+        }
+        Ok(Value::String(result))
+    }
+
+    match parse_result(res, &client) {
+        Ok(result) => return Ok(result),
+        Err(err) => return Err(err),
     }
 }
 
