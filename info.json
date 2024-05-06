@@ -9,6 +9,11 @@
       "key": "subscription_key",
       "display": "Subscription Key",
       "type": "input"
+    },
+    {
+      "key": "endpoint",
+      "display": "Endpoint",
+      "type": "input"
     }
   ],
   "language": {

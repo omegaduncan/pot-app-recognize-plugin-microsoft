@@ -17,13 +17,20 @@ pub fn recognize(
         None => return Err("subscription_key not found".into()),
     };
 
+    let endpoint = match needs.get("endpoint") {
+        Some(endpoint) => endpoint.to_string(),
+        None => return Err("endpoint not found".into()),
+    };
+
     let base64_image = format!("data:image/png;base64,{}", base64);
     let mut form_data = HashMap::new();
     form_data.insert("url", base64_image);
     form_data.insert("language", lang.to_string());
 
+    let url = format!("{}/vision/v3.2/read/analyze", endpoint);
+
     let res: Value = client
-        .post("https://pandaocr-free.cognitiveservices.azure.com/vision/v3.2/read/analyze")
+        .post(&url)
         .header("Ocp-Apim-Subscription-Key", subscription_key)
         .header("Content-Type", "application/json")
         .json(&form_data)
