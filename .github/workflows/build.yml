@@ -14,14 +14,14 @@ jobs:
           fetch-depth: 1
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
-      - name: check
+      - name: Check
         run: cargo check --all --all-targets
-      - name: Install zip
+      - name: Install zip and jq
         run: sudo apt-get install -y zip jq
       - id: getname
         run: |
-          echo "NAME=$(cat info.json | jq '.id' | tr -d '"')" >> "$GITHUB_OUTPUT"
-          echo "ICON=$(cat info.json | jq '.icon' | tr -d '"')" >> "$GITHUB_OUTPUT"
+          echo "NAME=$(cat info.json | jq -r '.id')" >> "$GITHUB_OUTPUT"
+          echo "ICON=$(cat info.json | jq -r '.icon')" >> "$GITHUB_OUTPUT"
   build-for-windows:
     needs: check
     strategy:
@@ -42,14 +42,14 @@ jobs:
           fetch-depth: 1
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
-      - name: install toolchain
+      - name: Install toolchain
         run: |
           rustup target add ${{ matrix.target }}
-          rustup toolchain install --force-non-host stable-${{ matrix.target }}
+          rustup toolchain install stable-${{ matrix.target }}
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
       - name: Rename
-        run: move target/${{ matrix.target }}/release/plugin.dll ./plugin.dll
+        run: Move-Item -Path target/${{ matrix.target }}/release/plugin.dll -Destination ./plugin.dll
       - uses: vimtor/action-zip@v1
         with:
           files: info.json ${{needs.check.outputs.icon}} plugin.dll
@@ -87,14 +87,14 @@ jobs:
           fetch-depth: 1
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
-      - name: install toolchain
+      - name: Install toolchain
         run: |
           rustup target add ${{ matrix.target }}
-          rustup toolchain install --force-non-host stable-${{ matrix.target }}
+          rustup toolchain install stable-${{ matrix.target }}
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
       - name: Rename
-        run: sudo mv target/${{ matrix.target }}/release/libplugin.dylib ./plugin.dylib
+        run: mv target/${{ matrix.target }}/release/libplugin.dylib ./plugin.dylib
       - uses: vimtor/action-zip@v1
         with:
           files: info.json ${{needs.check.outputs.icon}} plugin.dylib
