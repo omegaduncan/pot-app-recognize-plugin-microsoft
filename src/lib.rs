@@ -1,4 +1,3 @@
-use serde_json::json;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
@@ -6,7 +5,7 @@ use std::error::Error;
 #[no_mangle]
 pub fn recognize(
     base64: &str, // 图像Base64
-    lang: &str,   // 识别语言
+    _lang: &str,  // 识别语言
     // (pot会根据info.json 中的 language 字段传入插件需要的语言代码,无需再次转换)
     needs: HashMap<String, String>, // 插件需要的其他参数,由info.json定义
 ) -> Result<Value, Box<dyn Error>> {
@@ -26,9 +25,9 @@ pub fn recognize(
 
     let res: Value = client
         .post(&url)
-        .header("Ocp-Apim-Subscription-Key", subscription_key)
+        .header("Ocp-Apim-Subscription-Key", &subscription_key)
         .header("Content-Type", "application/octet-stream")
-        .body(base64::decode(base64)?)
+        .body(base64::decode(base64).map_err(|e| format!("Failed to decode base64: {}", e))?)
         .send()?
         .json()?;
 
@@ -43,7 +42,7 @@ pub fn recognize(
     for _ in 0..30 {
         let res: Value = client
             .get(operation_location)
-            .header("Ocp-Apim-Subscription-Key", subscription_key)
+            .header("Ocp-Apim-Subscription-Key", &subscription_key)
             .send()?
             .json()?;
 
