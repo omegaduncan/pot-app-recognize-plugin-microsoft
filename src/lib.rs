@@ -1,4 +1,5 @@
 use base64;
+use serde_json::json;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
@@ -23,17 +24,16 @@ pub fn recognize(
     };
 
     let base64_image = format!("data:image/png;base64,{}", base64);
-    let mut form_data = HashMap::new();
-    form_data.insert("url", base64_image);
-    form_data.insert("language", lang.to_string());
 
-    let url = format!("{}/vision/v3.2/read/analyze", endpoint);
+    let url = format!("{}vision/v3.2/read/analyze", endpoint);
 
     let res: Value = client
         .post(&url)
         .header("Ocp-Apim-Subscription-Key", subscription_key)
-        .header("Content-Type", "application/json")
-        .json(&form_data)
+        .json(&json!({
+            "url": base64_image,
+            "language": lang,
+        }))
         .send()?
         .json()?;
 
@@ -47,7 +47,9 @@ pub fn recognize(
             .and_then(|obj| obj.get("analyzeResult"))
             .and_then(|obj| obj.as_object())
             .and_then(|obj| obj.get("readResults"))
-            .and_then(|url| url.as_str())
+            .and_then(|url| url.as_array())
+            .and_then(|array| array.get(0))
+            .and_then(|obj| obj.as_str())
             .ok_or("Failed to extract result URL")?;
 
         let res: Value = client.get(result_url).send()?.json()?;
@@ -78,6 +80,7 @@ mod tests {
     fn try_request() {
         let mut needs = HashMap::new();
         needs.insert("subscription_key".to_string(), "YOUR_SUBSCRIPTION_KEY".to_string());
+        needs.insert("endpoint".to_string(), "https://YOUR_RESOURCE_NAME.cognitiveservices.azure.com/".to_string());
         let result = recognize("iVBORw0KGgoAAAANSUhEUgAAADsAAAAeCAYAAACSRGY2AAAAAXNSR0IArs4c6QAAArNJREFUWEftl19IU1Ecxz+O5uQiNTCJkNj0ZWhkSOyh7CEy0CWZQQoTWYgvk17KFAdr9GBBYGb/qD0oUpgSCZViGkTRQ/hwEVOYIIhlMF8kUjbGZGPFdGtrGvcWzTa79/Gec+79fb7fc36/38nQ6/Xf+E+eDAV2mzqdns6WtDNRqYP5UQ71D8i2RoGVLdW/mqg4K6287G3sqHtEdYEP8clrdpZXYdCCxzWE/dkHjp5poXa/AMEVZodvU+ea2/Dn0n2NnK8wYsgVQAWEAng+TfHiZTddy75NI83LtdBRfSS2xruIONKNNftccs9sFPbLkpqcXUCmei1At2uO3YU6CKnR7AhDLDJ204bdH4u/tKSdjkodmvCrEKz6A2iE9fWEVhAftmF1JwBnmxm0msjPinzHH2A1U42GFcSJZYzGJCaodVhYnRqgZngUCmw8rStC419gzOnA7iuio8HG8b3wccTC2clIkFkWhppPkKcK4H7bTev7cWbDQ5kHcZxqorpQAO8M929dp+eHPgJtNXepNajh6wx9j+9E3BeoONBCc7mOnCx18rJxFDYGYmbwson85Sm67nXSB9SXO7loFPCIDzj2anwtdOPhTpxlueB+h7W3BzF+w6pM9F8wYxACTPc30jAfHTTR22ymeMP78HicEMkqPX8Ku5kAMV6Ba/VOKvQJu4GIkCzx5sYlWuOOxE8CphcsbBQxjBOFXeD5VQftiekr2aUnOc4qsNvV2W12ZuVlYx9irxWrO82zMXLqbFz5WseVqLNlOnKyU7DOhkP/qx2Uysf05BLFJVvQQf1uUxHdmIY9Fq5UxfW5wQCezxK9sbYKx+mTGPMi/fRW9cbSd4rUnyH71pP6KNIRKrDSGqXnDMXZ9PRNOmrF2USNtFotXq+XYDAoLV8Kz5DlrAKbwg7+KrTvuhRWXxXeDuUAAAAASUVORK5CYII=", "eng", needs).unwrap();
         println!("{result}");
     }
