@@ -1,4 +1,4 @@
-# Pot-App 文字识别插件模板仓库 (以 [OCR Space](https://ocr.space/) 为例)
+# Pot-App 文字識別 Microsoft 插件
 
 ### [English](./README_EN.md) | 简体中文
 
