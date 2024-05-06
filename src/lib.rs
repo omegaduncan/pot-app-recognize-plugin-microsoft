@@ -1,4 +1,3 @@
-use base64;
 use serde_json::json;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -23,53 +22,42 @@ pub fn recognize(
         None => return Err("endpoint not found".into()),
     };
 
-    let base64_image = format!("data:image/png;base64,{}", base64);
-
-    let url = format!("{}vision/v3.2/read/analyze", endpoint);
+    let url = format!("{}/vision/v3.2/read/analyze", endpoint);
 
     let res: Value = client
         .post(&url)
         .header("Ocp-Apim-Subscription-Key", subscription_key)
-        .json(&json!({
-            "url": base64_image,
-            "language": lang,
-        }))
+        .header("Content-Type", "application/octet-stream")
+        .body(base64::decode(base64)?)
         .send()?
         .json()?;
 
-    fn parse_result(res: Value, client: &reqwest::blocking::Client) -> Result<Value, Box<dyn Error>> {
-        println!("{res:?}");
-        if let Some(error) = res.as_object().and_then(|obj| obj.get("error")) {
-            return Err(error.to_string().into());
-        }
-        let result_url = res
-            .as_object()
-            .and_then(|obj| obj.get("analyzeResult"))
-            .and_then(|obj| obj.as_object())
-            .and_then(|obj| obj.get("readResults"))
-            .and_then(|url| url.as_array())
-            .and_then(|array| array.get(0))
-            .and_then(|obj| obj.as_str())
-            .ok_or("Failed to extract result URL")?;
+    let operation_location = res
+        .as_object()
+        .and_then(|obj| obj.get("Operation-Location"))
+        .and_then(|location| location.as_str())
+        .ok_or("Failed to get Operation-Location")?;
 
-        let res: Value = client.get(result_url).send()?.json()?;
-        let lines = res.as_array().ok_or("Failed to parse lines")?;
-        let mut result = String::new();
-        for line in lines {
-            let text = line
-                .as_object()
-                .and_then(|obj| obj.get("text"))
-                .and_then(|text| text.as_str())
-                .ok_or("Failed to extract line text")?;
-            result.push_str(text);
-            result.push('\n');
+    let mut recognize_result: Option<Value> = None;
+
+    for _ in 0..30 {
+        let res: Value = client
+            .get(operation_location)
+            .header("Ocp-Apim-Subscription-Key", subscription_key)
+            .send()?
+            .json()?;
+
+        if res["status"] == "succeeded" {
+            recognize_result = Some(res["analyzeResult"].clone());
+            break;
         }
-        Ok(Value::String(result))
+
+        std::thread::sleep(std::time::Duration::from_secs(1));
     }
 
-    match parse_result(res, &client) {
-        Ok(result) => return Ok(result),
-        Err(err) => return Err(err),
+    match recognize_result {
+        Some(result) => Ok(result),
+        None => Err("Failed to get recognize result".into()),
     }
 }
 
