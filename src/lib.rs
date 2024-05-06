@@ -1,3 +1,4 @@
+use base64;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
@@ -16,9 +17,9 @@ pub fn recognize(
         None => return Err("subscription_key not found".into()),
     };
 
-    let base64 = format!("data:image/png;base64,{}", base64);
+    let base64_image = format!("data:image/png;base64,{}", base64);
     let mut form_data = HashMap::new();
-    form_data.insert("url", base64);
+    form_data.insert("url", base64_image);
     form_data.insert("language", lang.to_string());
 
     let res: Value = client
