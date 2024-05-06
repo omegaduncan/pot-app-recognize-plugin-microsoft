@@ -29,23 +29,23 @@ pub fn recognize(
         .send()?
         .json()?;
 
-    fn parse_result(res: Value) -> Option<Result<Value, Box<dyn Error>>> {
-        println!("{res:?}");
-        if let Some(error) = res.as_object()?.get("error") {
-            return Some(Err(error.to_string().into()));
-        }
-        let result_url = res.as_object()?.get("analyzeResult")?.as_object()?.get("readResults")?.as_str()?;
-        
-        let mut result = String::new();
-        let res: Value = client.get(result_url).send()?.json()?;
-        let lines = res.as_array()?;
-        for line in lines {
-            let text = line.as_object()?.get("text")?.as_str()?;
-            result.push_str(text);
-            result.push('\n');
-        }
-        Some(Ok(Value::String(result)))
+fn parse_result(res: Value, client: &reqwest::blocking::Client) -> Option<Result<Value, Box<dyn Error>>> {
+    println!("{res:?}");
+    if let Some(error) = res.as_object()?.get("error") {
+        return Some(Err(error.to_string().into()));
     }
+    let result_url = res.as_object()?.get("analyzeResult")?.as_object()?.get("readResults")?.as_str()?;
+    
+    let mut result = String::new();
+    let res: Value = client.get(result_url).send()?.json()?;
+    let lines = res.as_array()?;
+    for line in lines {
+        let text = line.as_object()?.get("text")?.as_str()?;
+        result.push_str(text);
+        result.push('\n');
+    }
+    Some(Ok(Value::String(result)))
+}
 
     if let Some(result) = parse_result(res) {
         return result;
