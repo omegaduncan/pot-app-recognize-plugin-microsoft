@@ -23,13 +23,19 @@ pub fn recognize(
 
     let url = format!("{}/vision/v3.2/read/analyze", endpoint);
 
-    let res: Value = client
+    let response = client
         .post(&url)
         .header("Ocp-Apim-Subscription-Key", &subscription_key)
         .header("Content-Type", "application/octet-stream")
         .body(base64::decode(base64).map_err(|e| format!("Failed to decode base64: {}", e))?)
-        .send()?
-        .json()?;
+        .send()?;
+
+    let status = response.status();
+    if !status.is_success() {
+        return Err(format!("HTTP error: {}", status).into());
+    }
+
+    let res: Value = response.json()?;
 
     let operation_location = res
         .as_object()
@@ -40,11 +46,17 @@ pub fn recognize(
     let mut recognize_result: Option<Value> = None;
 
     for _ in 0..30 {
-        let res: Value = client
+        let response = client
             .get(operation_location)
             .header("Ocp-Apim-Subscription-Key", &subscription_key)
-            .send()?
-            .json()?;
+            .send()?;
+
+        let status = response.status();
+        if !status.is_success() {
+            return Err(format!("HTTP error: {}", status).into());
+        }
+
+        let res: Value = response.json()?;
 
         if res["status"] == "succeeded" {
             recognize_result = Some(res["analyzeResult"].clone());
