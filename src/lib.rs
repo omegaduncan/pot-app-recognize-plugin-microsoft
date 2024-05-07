@@ -1,13 +1,10 @@
 use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
 
 #[no_mangle]
 pub fn recognize(
-    image_path: &str,
+    base64: &str,
     lang: &str,
     needs: HashMap<String, String>,
 ) -> Result<Value, Box<dyn Error>> {
@@ -31,16 +28,11 @@ pub fn recognize(
         endpoint, lang, detect_orientation, model_version
     );
 
-    let mut file = File::open(Path::new(image_path))?;
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer)?;
-    let base64_image = base64::encode(&buffer);
-
     let response = client
         .post(&url)
         .header("Ocp-Apim-Subscription-Key", &subscription_key)
         .header("Content-Type", "application/json")
-        .body(format!(r#"{{"url":"data:image/png;base64,{}"}}"#, base64_image))
+        .body(format!(r#"{{"url":"data:image/png;base64,{}"}}"#, base64))
         .send()?;
 
     let status = response.status();
@@ -84,8 +76,8 @@ mod tests {
         let mut needs = HashMap::new();
         needs.insert("subscription_key".to_string(), "YOUR_SUBSCRIPTION_KEY".to_string());
         needs.insert("endpoint".to_string(), "https://YOUR_RESOURCE_NAME.cognitiveservices.azure.com".to_string());
-        let image_path = "C:\\Users\\{用户名}\\AppData\\Local\\com.pot-app.desktop\\pot_screenshot_cut.png";
-        let result = recognize(image_path, "zh-Hant", needs).unwrap();
+        let base64_image = "iVBORw0KGgoAAAANSUhEUgAAADsAAAAeCAYAAACSRGY2AAAAAXNSR0IArs4c6QAAArNJREFUWEftl19IU1Ecxz+O5uQiNTCJkNj0ZWhkSOyh7CEy0CWZQQoTWYgvk17KFAdr9GBBYGb/qD0oUpgSCZViGkTRQ/hwEVOYIIhlMF8kUjbGZGPFdGtrGvcWzTa79/Gec+79fb7fc36/38nQ6/Xf+E+eDAV2mzqdns6WtDNRqYP5UQ71D8i2RoGVLdW/mqg4K6287G3sqHtEdYEP8clrdpZXYdCCxzWE/dkHjp5poXa/AMEVZodvU+ea2/Dn0n2NnK8wYsgVQAWEAng+TfHiZTddy75NI83LtdBRfSS2xruIONKNNftccs9sFPbLkpqcXUCmei1At2uO3YU6CKnR7AhDLDJ204bdH4u/tKSdjkodmvCrEKz6A2iE9fWEVhAftmF1JwBnmxm0msjPinzHH2A1U42GFcSJZYzGJCaodVhYnRqgZngUCmw8rStC419gzOnA7iuio8HG8b3wccTC2clIkFkWhppPkKcK4H7bTev7cWbDQ5kHcZxqorpQAO8M929dp+eHPgJtNXepNajh6wx9j+9E3BeoONBCc7mOnCx18rJxFDYGYmbwson85Sm67nXSB9SXO7loFPCIDzj2anwtdOPhTpxlueB+h7W3BzF+w6pM9F8wYxACTPc30jAfHTTR22ymeMP78HicEMkqPX8Ku5kAMV6Ba/VOKvQJu4GIkCzx5sYlWuOOxE8CphcsbBQxjBOFXeD5VQftiekr2aUnOc4qsNvV2W12ZuVlYx9irxWrO82zMXLqbFz5WseVqLNlOnKyU7DOhkP/qx2Uysf05BLFJVvQQf1uUxHdmIY9Fq5UxfW5wQCezxK9sbYKx+mTGPMi/fRW9cbSd4rUnyH71pP6KNIRKrDSGqXnDMXZ9PRNOmrF2USNtFotXq+XYDAoLV8Kz5DlrAKbwg7+KrTvuhRWXxXeDuUAAAAASUVORK5CYII=";
+        let result = recognize(base64_image, "zh-Hant", needs).unwrap();
         println!("{result}");
     }
 }
