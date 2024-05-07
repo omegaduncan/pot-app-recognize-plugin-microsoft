@@ -9,7 +9,7 @@
 ## Usage
 1. Download the plugin package for your platform.
 2. Extract the `.potext` file from the downloaded package.
-3. Open Pot-App, go to Preferences, select Service Settings, and then Translation.
+3. Open Pot-App, go to Preferences, select Service Settings, and then Recognize.
 4. Add an external plugin and choose to install an external plugin.
 5. Select the extracted `.potext` file to complete the installation.
 6. Add the plugin to the service list, then set up `Subscription Key` (API KEY) and `Endpoint` (https://{resourceName}.cognitiveservices.azure.com/).

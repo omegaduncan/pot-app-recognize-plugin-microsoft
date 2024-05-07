@@ -9,7 +9,7 @@
 ## 使用方法
 1. 下載對應平台的插件壓縮包。
 2. 解壓縮得到 `.potext` 文件。
-3. 打開 Pot-App，進入偏好設置，選擇服務設置，然後點擊翻譯。
+3. 打開 Pot-App，進入偏好設置，選擇服務設置，然後點擊文字辨識。
 4. 添加外部插件，選擇安裝外部插件。
 5. 選擇剛剛解壓縮得到的 `.potext` 文件，完成安裝。
 6. 將插件添加到服務列表中，再設置 `Subscription Key`(API KEY)、 `Endpoint`(端點，https://{resourceName}.cognitiveservices.azure.com/)。
