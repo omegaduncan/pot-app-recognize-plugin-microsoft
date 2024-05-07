@@ -28,11 +28,13 @@ pub fn recognize(
         endpoint, lang, detect_orientation, model_version
     );
 
+    let binary_image_data = base64::decode(base64)?;
+
     let response = client
         .post(&url)
         .header("Ocp-Apim-Subscription-Key", &subscription_key)
-        .header("Content-Type", "application/json")
-        .body(format!(r#"{{"url":"data:image/png;base64,{}"}}"#, base64))
+        .header("Content-Type", "application/octet-stream")
+        .body(binary_image_data)
         .send()?;
 
     let status = response.status();
