@@ -1,7 +1,7 @@
 async function recognize(base64, lang, options) {
     const { config, utils } = options;
-    const { http } = utils;
-    const { fetch, Body } = http;
+    const { http, readBinaryFile, cacheDir } = utils;
+    const { fetch, Body, } = http;
     let { subscription_key: subKey, endpoint } = config;
 
     if (subKey === undefined || subKey.length === 0) {
@@ -14,35 +14,34 @@ async function recognize(base64, lang, options) {
     if (!endpoint.startsWith("http")) {
         endpoint = "https://" + endpoint;
     }
-
-    base64 = `data:image/png;base64,${base64}`;
+    const data = await readBinaryFile(`${cacheDir}/pot_screenshot_cut.png`);
 
     let res = await fetch(`${endpoint}/vision/v3.2/ocr`, {
         method: "POST",
-        header: {
-            "Ocp-Apim-Subscription-Key": subKey
+        headers: {
+            "Ocp-Apim-Subscription-Key": subKey,
+            "Content-Type": "application/octet-stream"
         },
         query: {
             language: lang,
-            detectOrientation: true,
+            detectOrientation: "true",
             "model-version": "latest"
         },
-        body: Body.json({
-            url: base64
-        })
+        body: Body.bytes(data)
     })
 
     if (res.ok) {
-        const { result } = res.data;
+        const result = res.data;
         const { regions } = result;
         let text = "";
         if (regions) {
             for (const region of regions) {
                 const { lines } = region;
                 for (const line of lines) {
-                    const { words } = lines;
+                    const { words } = line;
                     for (const word of words) {
                         text += word.text;
+                        text += " ";
                     }
                     text += "\n";
                 }
