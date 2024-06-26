@@ -1,5 +1,5 @@
 {
-  "id": "plugin.com.pot-app.microsoft",
+  "id": "plugin.com.omegaduncan.microsoft",
   "plugin_type": "recognize",
   "icon": "icon.png",
   "display": "Microsoft OCR",
