@@ -1,17 +1,12 @@
 # Pot-App 文字識別 Microsoft 插件
 
-### [English](./README_EN.md) | 简体中文
-
-## 支持平台
-- Windows x64
-  - [下載鏈接](https://github.com/omegaduncan/pot-app-recognize-plugin-microsoft/releases/download/v0.0.13/x86_64-pc-windows-msvc.zip)
+### [English](./README_EN.md) | 繁體中文
 
 ## 使用方法
-1. 下載對應平台的插件壓縮包。
-2. 解壓縮得到 `.potext` 文件。
-3. 打開 Pot-App，進入偏好設置，選擇服務設置，然後點擊文字辨識。
-4. 添加外部插件，選擇安裝外部插件。
-5. 選擇剛剛解壓縮得到的 `.potext` 文件，完成安裝。
+1. 到 [Releases](https://github.com/omegaduncan/pot-app-recognize-plugin-microsoft/releases)下載 `plugin.com.omegaduncan.microsoft.potext` 文件。
+2. 打開 Pot-App，進入偏好設置，選擇服務設置，然後點擊文字辨識。
+3. 添加外部插件，選擇安裝外部插件。
+4. 選擇剛剛下載的 `plugin.com.omegaduncan.microsoft.potext` 文件，完成安裝。
 6. 將插件添加到服務列表中，再設置 `Subscription Key`(API KEY)、 `Endpoint`(端點，https://{resourceName}.cognitiveservices.azure.com/)。
 
 ## 其他說明

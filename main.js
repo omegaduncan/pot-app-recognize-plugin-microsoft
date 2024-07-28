@@ -30,27 +30,42 @@ async function recognize(base64, lang, options) {
         body: Body.bytes(data)
     })
 
-    if (res.ok) {
-        const result = res.data;
-        const { regions } = result;
-        let text = "";
-        if (regions) {
-            for (const region of regions) {
-                const { lines } = region;
-                for (const line of lines) {
-                    const { words } = line;
-                    for (const word of words) {
-                        text += word.text;
-                        text += " ";
+        if (res.ok) {
+            const result = res.data;
+            const { regions } = result;
+            let text = "";
+            if (regions) {
+                // 定義一個函數來判斷是否需要保留空格
+                const shouldKeepSpaces = (lang) => {
+                    // 這裡列出需要保留空格的語言代碼
+                    const spaceLanguages = ['en', 'fr', 'de', 'es', 'it', 'pt', 'ru'];
+                    return spaceLanguages.some(l => lang.startsWith(l));
+                };
+    
+                const keepSpaces = shouldKeepSpaces(lang);
+    
+                for (const region of regions) {
+                    const { lines } = region;
+                    for (const line of lines) {
+                        const { words } = line;
+                        let lineText = words.map(word => word.text).join('');
+                        
+                        if (keepSpaces) {
+                            // 對於需要空格的語言，我們重新添加適當的空格
+                            lineText = lineText.replace(/(\S)(\S)/g, '$1 $2').trim();
+                        }
+                        
+                        text += lineText + "\n";
                     }
-                    text += "\n";
                 }
+                
+                // 移除多餘的空行並修剪首尾空白
+                text = text.replace(/\n+/g, '\n').trim();
+                return text;
+            } else {
+                throw JSON.stringify(result);
             }
-            return text;
         } else {
-            throw JSON.stringify(result);
+            throw `Http Request Error\nHttp Status: ${res.status}\n${JSON.stringify(res.data)}`;
         }
-    } else {
-        throw `Http Request Error\nHttp Status: ${res.status}\n${JSON.stringify(res.data)}`;
     }
-}
