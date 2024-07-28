@@ -14,4 +14,4 @@
 - **Free Pricing Tier**: Provides 5000 recognitions per month, with 20 uses available per minute.
 
 ## Secondary Notes
-This plugin is modified from the text recognition plugin template repository (OCR Space) in collaboration with Claude Opus and ChatGPT 4 Turbo. Due to potential post-processing bugs, the accuracy may be lower. We will gradually fix these issues in subsequent versions.
+This plugin is a collaboration modified by Claude Opus, ChatGPT 4 Turbo, and Claude 3.5 Sonnet (added in v1.1.0) from the text recognition plugin template repository (OCR Space). Due to possible post-processing bugs that may result in lower accuracy, we will gradually address these issues in subsequent versions.
