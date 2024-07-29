@@ -30,42 +30,43 @@ async function recognize(base64, lang, options) {
         body: Body.bytes(data)
     })
 
-        if (res.ok) {
-            const result = res.data;
-            const { regions } = result;
-            let text = "";
-            if (regions) {
-                // 定義一個函數來判斷是否需要保留空格
-                const shouldKeepSpaces = (lang) => {
-                    // 這裡列出需要保留空格的語言代碼
-                    const spaceLanguages = ['en', 'fr', 'de', 'es', 'it', 'pt', 'ru'];
-                    return spaceLanguages.some(l => lang.startsWith(l));
-                };
-    
-                const keepSpaces = shouldKeepSpaces(lang);
-    
-                for (const region of regions) {
-                    const { lines } = region;
-                    for (const line of lines) {
-                        const { words } = line;
-                        let lineText = words.map(word => word.text).join('');
+    if (res.ok) {
+        const result = res.data;
+        const { regions } = result;
+        let text = "";
+        if (regions) {
+            for (const region of regions) {
+                const { lines } = region;
+                for (const line of lines) {
+                    const { words } = line;
+                    let lineText = "";
+                    let prevWordIsChinese = false;
+                    for (let i = 0; i < words.length; i++) {
+                        const currentWord = words[i].text;
+                        const isChineseWord = /^[\u4e00-\u9fa5]+$/.test(currentWord);
                         
-                        if (keepSpaces) {
-                            // 對於需要空格的語言，我們重新添加適當的空格
-                            lineText = lineText.replace(/(\S)(\S)/g, '$1 $2').trim();
+                        if (i > 0) {
+                            if (isChineseWord && prevWordIsChinese) {
+                                // 如果當前詞和前一個詞都是中文，不添加空格
+                                lineText += currentWord;
+                            } else {
+                                // 其他情況下添加空格
+                                lineText += " " + currentWord;
+                            }
+                        } else {
+                            lineText += currentWord;
                         }
                         
-                        text += lineText + "\n";
+                        prevWordIsChinese = isChineseWord;
                     }
+                    text += lineText + "\n";
                 }
-                
-                // 移除多餘的空行並修剪首尾空白
-                text = text.replace(/\n+/g, '\n').trim();
-                return text;
-            } else {
-                throw JSON.stringify(result);
             }
+            return text.trim();
         } else {
-            throw `Http Request Error\nHttp Status: ${res.status}\n${JSON.stringify(res.data)}`;
+            throw JSON.stringify(result);
         }
+    } else {
+        throw `Http Request Error\nHttp Status: ${res.status}\n${JSON.stringify(res.data)}`;
     }
+}
